@@ -1,0 +1,134 @@
+package com.klef.jfsd.exam;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import javax.persistence.*;
+import java.util.Optional;
+// Model
+@Entity
+@Table(name = "books")
+public class Book {
+    @Id
+    private Long id;
+
+    private String title;
+    private String author;
+    private String genre;
+    private Double price;
+    private Integer publishedYear;
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public String getGenre() {
+        return genre;
+    }
+
+    public void setGenre(String genre) {
+        this.genre = genre;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
+    }
+
+    public Integer getPublishedYear() {
+        return publishedYear;
+    }
+
+    public void setPublishedYear(Integer publishedYear) {
+        this.publishedYear = publishedYear;
+    }
+}
+
+// Repository
+@Repository
+public interface BookRepository extends JpaRepository<Book, Long> {
+}
+
+// Service
+@Service
+public class BookService {
+    @Autowired
+    private BookRepository bookRepository;
+
+    public Optional<Book> findBookById(Long id) {
+        return bookRepository.findById(id);
+    }
+
+    public Book updateBook(Book book) {
+        return bookRepository.save(book);
+    }
+}
+
+// Controller
+@RestController
+@RequestMapping("/api/books")
+public class BookController {
+    @Autowired
+    private BookService bookService;
+
+    @PutMapping("/{id}")
+    public ResponseEntity<String> updateBook(@PathVariable Long id, @RequestBody Book updatedBook) {
+        Optional<Book> existingBook = bookService.findBookById(id);
+
+        if (existingBook.isPresent()) {
+            Book book = existingBook.get();
+            book.setTitle(updatedBook.getTitle());
+            book.setAuthor(updatedBook.getAuthor());
+            book.setGenre(updatedBook.getGenre());
+            book.setPrice(updatedBook.getPrice());
+            book.setPublishedYear(updatedBook.getPublishedYear());
+
+            bookService.updateBook(book);
+            return ResponseEntity.ok("Book updated successfully.");
+        } else {
+            return ResponseEntity.status(404).body("Book not found.");
+        }
+    }
+}
+
+// application.properties
+spring.datasource.url=jdbc:mysql://localhost:3306/labexam
+spring.datasource.username=root
+spring.datasource.password=yourpassword
+spring.jpa.hibernate.ddl-auto=update
+
+// Testing Instructions
+// 1. Insert records into the "books" table manually using an SQL client.
+// 2. Use Postman to test the API.
+//    - Endpoint: PUT http://localhost:8080/api/books/{id}
+//    - Body (JSON):
+//      {
+//          "title": "New Title",
+//          "author": "Updated Author",
+//          "genre": "Updated Genre",
+//          "price": 99.99,
+//          "publishedYear": 2024
+//      }
